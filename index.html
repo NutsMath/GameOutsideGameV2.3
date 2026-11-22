@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Outside Game III</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: background 1s ease;
+        }
+        /* ท้องฟ้าสดใสเมื่อชนะเกม */
+        body.celebrate {
+            background: linear-gradient(180deg, #6ec6ff 0%, #cceeff 65%, #fff8e7 100%);
+        }
+
+        /* คอนเทนเนอร์หลักของเกม */
+        #gameContainer {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.6s ease;
+        }
+        /* กล่องพื้นหลังโปร่งแสงในหน้าสรุปผล เพื่อให้อ่านตัวหนังสือชัดเจนบนสายรุ้ง */
+        body.celebrate #gameContainer {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 30px 45px;
+            border-radius: 24px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+        }
+
+        #levelText {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        #levelImage {
+            display: none;
+            max-width: 320px;
+            max-height: 240px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        #passwordInput {
+            font-size: 18px;
+            padding: 5px;
+            width: 250px;
+            text-align: center;
+        }
+        #checkButton {
+            font-size: 18px;
+            padding: 5px 15px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .correct {
+            color: green;
+            margin-top: 10px;
+        }
+        .incorrect {
+            color: red;
+            margin-top: 10px;
+        }
+        .summary {
+            color: #1a365d;
+            font-size: 19px;
+            line-height: 1.7;
+        }
+
+        .congrats-text {
+            display: none;
+            font-size: 26px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #ff1e00, #ff8800, #d4a000, #00a838, #0066ff, #4b0082, #9400d3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* สายรุ้งขนาดใหญ่เต็มหน้าจอ */
+        #fullScreenRainbow {
+            display: none;
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+        #fullScreenRainbow svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .rainbow-arc {
+            fill: none;
+            stroke-linecap: round;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawRainbow 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        /* หน่วงเวลาแต่ละสีให้ค่อยๆ วาดไล่ระดับกัน */
+        .arc-1 { animation-delay: 0.05s; }
+        .arc-2 { animation-delay: 0.12s; }
+        .arc-3 { animation-delay: 0.19s; }
+        .arc-4 { animation-delay: 0.26s; }
+        .arc-5 { animation-delay: 0.33s; }
+        .arc-6 { animation-delay: 0.40s; }
+        .arc-7 { animation-delay: 0.47s; }
+
+        @keyframes drawRainbow {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.6);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- พื้นหลังสายรุ้งยักษ์เต็มจอ -->
+    <div id="fullScreenRainbow">
+        <svg viewBox="0 0 1000 540" preserveAspectRatio="xMidYMax slice">
+            <!-- แดง -->
+            <path class="rainbow-arc arc-1" pathLength="100" d="M -40,540 A 540,540 0 0,1 1040,540" stroke="#FF3B30" stroke-width="46" opacity="0.9"/>
+            <!-- ส้ม -->
+            <path class="rainbow-arc arc-2" pathLength="100" d="M 5,540 A 495,495 0 0,1 995,540" stroke="#FF9500" stroke-width="46" opacity="0.9"/>
+            <!-- เหลือง -->
+            <path class="rainbow-arc arc-3" pathLength="100" d="M 50,540 A 450,450 0 0,1 950,540" stroke="#FFCC00" stroke-width="46" opacity="0.9"/>
+            <!-- เขียว -->
+            <path class="rainbow-arc arc-4" pathLength="100" d="M 95,540 A 405,405 0 0,1 905,540" stroke="#34C759" stroke-width="46" opacity="0.9"/>
+            <!-- ฟ้า/น้ำเงิน -->
+            <path class="rainbow-arc arc-5" pathLength="100" d="M 140,540 A 360,360 0 0,1 860,540" stroke="#007AFF" stroke-width="46" opacity="0.9"/>
+            <!-- คราม -->
+            <path class="rainbow-arc arc-6" pathLength="100" d="M 185,540 A 315,315 0 0,1 815,540" stroke="#5856D6" stroke-width="46" opacity="0.9"/>
+            <!-- ม่วง -->
+            <path class="rainbow-arc arc-7" pathLength="100" d="M 230,540 A 270,270 0 0,1 770,540" stroke="#AF52DE" stroke-width="46" opacity="0.9"/>
+        </svg>
+    </div>
+
+    <div id="gameContainer">
+        <h1>Game Outside Game III</h1>
+        <div id="levelText"></div>
+        <img id="levelImage" src="" alt="Level 3 Clue">
+        <input type="text" id="passwordInput" placeholder="Enter password here">
+        <button id="checkButton">Check</button>
+
+        <div id="congratsText" class="congrats-text">🌈 ยินดีด้วย! คุณผ่านครบทุกด่านแล้ว! 🌈</div>
+        <div id="result"></div>
+    </div>
+    
+    <script>
+        const levels = [
+            { 
+                description: "2DAY", 
+                validPasswords: [
+                    "วันจันทร์ที่ 23 พฤศจิกายน พ.ศ. 2569", "Monday 23th November 2026", "23/11/69", 
+                    "23/11/26", "23th November 2026", "23 November 2026", "11/23/26", "26/11/23", "November 23, 2026"
+                ]
+            },
+            { 
+                description: "ผู้กำเนิด house system ในไทย", 
+                validPasswords: ["รัชกาลที่ 6"]
+            },
+            { 
+                description: "", 
+                image: "images/level3.webp",
+                validPasswords: ["Rainbow", "RAINBOW", "รุ้งกินน้ำ"]
+            }
+        ];
+
+        const attempts = Array(levels.length).fill(0);
+        let currentLevel = 0;
+
+        function updateLevelText() {
+            const level = levels[currentLevel];
+            const descText = level.description ? `: ${level.description}` : "";
+            document.getElementById("levelText").textContent = `LEVEL ${currentLevel + 1}${descText}`;
+
+            const imgElement = document.getElementById("levelImage");
+            if (level.image) {
+                imgElement.src = level.image;
+                imgElement.style.display = "block";
+            } else {
+                imgElement.style.display = "none";
+                imgElement.src = "";
+            }
+
+            document.getElementById("passwordInput").style.display = "block";
+        }
+
+        updateLevelText();
+
+        function showSummary() {
+            let totalAttempts = attempts.reduce((sum, attempts) => sum + attempts, 0);
+            let summary = "จำนวนครั้งที่ตอบผิดในแต่ละ LEVEL:<br>";
+            for (let i = 0; i < attempts.length; i++) {
+                summary += `LEVEL ${i + 1}: ${attempts[i]} ครั้ง<br>`;
+            }
+            summary += `<br><strong>รวมทั้งหมด: ${totalAttempts} ครั้ง</strong>`;
+            document.getElementById("result").innerHTML = summary;
+            document.getElementById("result").className = 'summary';
+
+            document.getElementById("passwordInput").style.display = "none";
+            document.getElementById("checkButton").style.display = "none";
+            document.getElementById("levelText").style.display = "none";
+            document.getElementById("levelImage").style.display = "none";
+
+            // แสดงสายรุ้งยักษ์เต็มหน้าจอและข้อความยินดี
+            document.getElementById("fullScreenRainbow").style.display = "block";
+            document.getElementById("congratsText").style.display = "block";
+            document.body.classList.add("celebrate");
+        }
+
+        function checkPassword() {
+            document.getElementById("result").textContent = '';
+            let userInput = document.getElementById("passwordInput").value.trim();
+
+            if (levels[currentLevel].validPasswords.includes(userInput)) {
+                document.getElementById("result").textContent = `ผ่าน LEVEL ${currentLevel + 1} แล้ว! คุณตอบผิดไปทั้งหมด ${attempts[currentLevel]} ครั้ง`;
+                document.getElementById("result").className = 'correct';
+                currentLevel++;
+
+                if (currentLevel < levels.length) {
+                    updateLevelText();
+                } else {
+                    showSummary();
+                }
+            } else {
+                attempts[currentLevel]++;
+                document.getElementById("result").textContent = `รหัสผ่านผิด! คุณตอบผิดไปแล้ว ${attempts[currentLevel]} ครั้ง`;
+                document.getElementById("result").className = 'incorrect';
+            }
+
+            document.getElementById("passwordInput").value = '';
+        }
+
+        document.getElementById("checkButton").addEventListener("click", checkPassword);
+
+        document.getElementById("passwordInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                checkPassword();
+            }
+        });
+    </script>
+</body>
+</html>
